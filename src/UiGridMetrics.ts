@@ -5,6 +5,7 @@ export class UiGridMetrics {
     private border: number;
 
     getHeaderFont(){
+        console.log('getHeaderFont')
         if(this.headerFont){
             return this.headerFont;
         }
@@ -12,7 +13,8 @@ export class UiGridMetrics {
         let header = document.querySelector('.ui-grid-header-cell .ui-grid-cell-contents');
 
         if(!header) {
-            throw new Error('not found: .ui-grid-header-cell .ui-grid-cell-contents');
+            return 'normal normal';
+            //throw new Error('not found: .ui-grid-header-cell .ui-grid-cell-contents');
         }
 
         let headerStyle = getComputedStyle(header);
@@ -51,7 +53,8 @@ export class UiGridMetrics {
         let header = document.querySelector('.ui-grid-header-cell .ui-grid-cell-contents');
 
         if(!header) {
-            throw new Error('not found: .ui-grid-header-cell .ui-grid-cell-contents');
+            return 0;
+            //throw new Error('not found: .ui-grid-header-cell .ui-grid-cell-contents');
         }
 
         let {paddingLeft, paddingRight} = getComputedStyle(header);
@@ -67,7 +70,8 @@ export class UiGridMetrics {
         let header = document.querySelector('.ui-grid-header-cell');
 
         if(!header) {
-            throw new Error('not found: .ui-grid-header-cell');
+            return 0;
+            //throw new Error('not found: .ui-grid-header-cell');
         }
 
         let {borderRightWidth} = getComputedStyle(header);
