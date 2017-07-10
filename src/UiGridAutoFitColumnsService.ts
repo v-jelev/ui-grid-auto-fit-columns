@@ -1,6 +1,5 @@
 import Measurer from './Measurer';
 import UiGridMetrics from './UiGridMetrics';
-import angular from 'angular';
 import IGridColumn = uiGrid.IGridColumn;
 import IGridApi = uiGrid.IGridApi;
 import IGridInstanceOf = uiGrid.IGridInstanceOf;
