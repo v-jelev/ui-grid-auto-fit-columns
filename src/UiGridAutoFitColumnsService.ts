@@ -1,12 +1,18 @@
 import Measurer from './Measurer';
 import UiGridMetrics from './UiGridMetrics';
+import angular from 'angular';
+import IGridColumn = uiGrid.IGridColumn;
+import IGridApi = uiGrid.IGridApi;
+import IGridInstanceOf = uiGrid.IGridInstanceOf;
 
 interface IExtendedColumnDef extends uiGrid.IColumnDef {
+    drawnWidth: Number;
     enableColumnAutoFit: boolean;
 }
 
 interface IExtendedGridColumn extends uiGrid.IGridColumn {
     colDef: IExtendedColumnDef;
+    grid: IGridInstanceOfExtended;
 }
 
 interface IExtendedGridInstance extends uiGrid.IGridInstance {
@@ -15,6 +21,10 @@ interface IExtendedGridInstance extends uiGrid.IGridInstance {
 
 interface IExtendedGridOptions extends uiGrid.IGridOptions {
     enableColumnAutoFit: boolean;
+}
+
+interface IGridInstanceOfExtended extends IGridInstanceOf<any> {
+    element: Array<HTMLElement>
 }
 
 interface IAnyFilterPredicateFunc {
@@ -85,6 +95,22 @@ export class UiGridAutoFitColumnsService {
         return !colDef.hasOwnProperty('width');
     }
 
+    static stripTags(html) {
+        var tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
+
+    static getLongestWord(label) {
+        return label.split(' ').reduce((longestWord, word) => {
+            if (word.length > longestWord.length) {
+                longestWord = word;
+            }
+
+            return longestWord;
+        }, '')
+    }
+
     columnsProcessor(renderedColumnsToProcess?: Array<IExtendedGridColumn>, rows?: Array<uiGrid.IGridRow>) {
         if (!rows.length) {
             return renderedColumnsToProcess;
@@ -97,14 +123,15 @@ export class UiGridAutoFitColumnsService {
         } = {};
 
 
-        renderedColumnsToProcess.forEach(column => {
-
+        renderedColumnsToProcess.forEach((column: IExtendedGridColumn) => {
             if (column.colDef.enableColumnAutoFit) {
                 const columnKey = column.field || column.name;
-                optimalWidths[columnKey] = Measurer.measureRoundedTextWidth(column.displayName, this.gridMetrics.getHeaderFont()) + this.gridMetrics.getHeaderButtonsWidth();
+                const longestColWord = UiGridAutoFitColumnsService.getLongestWord(column.displayName);
+
+                optimalWidths[columnKey] = Measurer.measureRoundedTextWidth(longestColWord, this.gridMetrics.getHeaderFont()) + this.gridMetrics.getHeaderButtonsWidth();
 
                 rows.forEach((row) => {
-                    let cellText = row.grid.getCellValue(row, column);
+                    let cellText = UiGridAutoFitColumnsService.stripTags(row.grid.getCellValue(row, column));
 
                     if (!!column.colDef.cellFilter) {
                         cellText = this.getFilteredValue(cellText, column.colDef.cellFilter);
@@ -122,6 +149,28 @@ export class UiGridAutoFitColumnsService {
                 column.updateColumnDef(column.colDef, false);
             }
         });
+
+        const totalColumnsWidth = renderedColumnsToProcess.reduce((res: number, column: any) => {
+            let width = angular.isNumber(column.width) ? column.width : (column.drawnWidth || 30)
+
+            if (column.minWidth && column.minWidth > width) {
+                width = column.minWidth;
+            }
+
+            res += width;
+            return res;
+        }, 0);
+
+        const gridContainer = renderedColumnsToProcess[0].grid.element[0];
+        if (gridContainer && gridContainer.clientWidth && gridContainer.clientWidth > totalColumnsWidth) {
+            renderedColumnsToProcess.forEach(function (column) {
+                if (column.colDef.enableColumnAutoFit) {
+                    column.colDef.width = '*';
+                    column.updateColumnDef(column.colDef, false);
+                }
+            });
+        }
+
         return renderedColumnsToProcess;
     }
 
